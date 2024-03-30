@@ -23,9 +23,9 @@ app.set('views','./src/views')
 app.use('/api/register',registerRouter)
 
 
-app.get('/', (req, res) => {
-  res.render('login.ejs',{Message: ''})
-});
+// app.get('/', (req, res) => {
+//   res.render('login.ejs',{Message: ''})
+// });
 
 
 

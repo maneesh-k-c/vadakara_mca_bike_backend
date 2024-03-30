@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
+const registerRouter = require('./src/routes/registerRouter');
 app.use(express.static('./public'))
 require('dotenv').config();
 
@@ -18,6 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.set('view engine','ejs')
 app.set('views','./src/views')
+
+app.use('/api/register',registerRouter)
 
 
 app.get('/', (req, res) => {

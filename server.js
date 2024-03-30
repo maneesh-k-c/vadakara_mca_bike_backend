@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const registerRouter = require('./src/routes/registerRouter');
+const mechanicRouter = require('./src/routes/mechanicRouter');
 app.use(express.static('./public'))
 require('dotenv').config();
 
@@ -21,6 +22,7 @@ app.set('view engine','ejs')
 app.set('views','./src/views')
 
 app.use('/api/register',registerRouter)
+app.use('/api/mechanic',mechanicRouter)
 
 
 // app.get('/', (req, res) => {

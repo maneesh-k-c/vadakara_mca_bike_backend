@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const workshopData = require('../models/workshopSchema');
 const loginData = require('../models/loginSchema');
 const mechanicData = require('../models/mechanicSchema');
+const userData = require('../models/userSchema');
 
 
 
@@ -296,64 +297,117 @@ registerRouter.get('/reject-mechanic/:_id', async (req, res) => {
 })
 
 // =====================user registration==================================
-// registerRouter.post('/user', async (req, res, next) => {
-//   try {
-//     const oldEmail = await loginData.findOne({ email: req.body.email });
-//     if (oldEmail) {
-//       return res.status(400).json({
-//         Success: false,
-//         Error: true,
-//         Message: 'Email already exist, Please Log In',
-//       });
-//     }
-//     const oldPhone = await userData.findOne({ mobile: req.body.mobile });
-//     if (oldPhone) {
-//       return res.status(400).json({
-//         Success: false,
-//         Error: true,
-//         Message: 'Mobile number already exist',
-//       });
-//     }
+registerRouter.post('/user', async (req, res, next) => {
+  try {
+    const oldEmail = await loginData.findOne({ email: req.body.email });
+    if (oldEmail) {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        Message: 'Email already exist, Please Log In',
+      });
+    }
+    const oldPhone = await userData.findOne({ mobile: req.body.mobile });
+    if (oldPhone) {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        Message: 'Mobile number already exist',
+      });
+    }
     
-//     const hashedPassword = await bcrypt.hash(req.body.password, 12);
-//     let log = {
-//       email: req.body.email,
-//       password: hashedPassword,
-//       role: 2,
-//       status:0
-//     };
-//     const result = await loginData(log).save();
-//     console.log(result);
-//     let reg = {
-//       login_id: result._id,
-//       name: req.body.name,
-//       mobile: req.body.mobile,
-//       age: req.body.age
-//     };
-//     const result2 = await userData(reg).save();
+    const hashedPassword = await bcrypt.hash(req.body.password, 12);
+    let log = {
+      email: req.body.email,
+      password: hashedPassword,
+      role: 3,
+      status:0
+    };
+    const result = await loginData(log).save();
 
-//     if (result2) {
-//       return res.json({
-//         Success: true,
-//         Error: false,
-//         data: result2,
-//         Message: 'Registration Successful',
-//       });
-//     } else {
-//       return res.json({
-//         Success: false,
-//         Error: true,
-//         Message: 'Registration Failed',
-//       });
-//     }
-//   } catch (error) {
-//     return res.json({
-//         Success: false,
-//         Error: true,
-//         Message: 'Something went wrong',
-//       });
-//   }
-// });
+    let reg = {
+      login_id: result._id,
+      name: req.body.name,
+      mobile: req.body.mobile,
+      address: req.body.address
+    };
+
+    const result2 = await userData(reg).save();
+
+    if (result2) {
+      return res.json({
+        Success: true,
+        Error: false,
+        data: result2,
+        Message: 'Registration Successful',
+      });
+    } else {
+      return res.json({
+        Success: false,
+        Error: true,
+        Message: 'Registration Failed',
+      });
+    }
+  } catch (error) {
+    return res.json({
+        Success: false,
+        Error: true,
+        Message: 'Something went wrong',
+      });
+  }
+});
+
+registerRouter.get('/view-single-user/:id', async (req, res) => {
+  try {
+      const user = await userData.findOne({login_id:req.params.id})
+      if (user) {
+          return res.status(200).json({
+              Success: true,
+              Error: false,
+              data: user
+          });
+      }else{
+          return res.status(400).json({
+              Success: false,
+              Error: true,
+              data: 'No data found'
+          });
+      }
+  } catch (error) {
+      return res.status(400).json({
+          Success: false,
+          Error: true,
+          data: 'Something went wrong'
+      });
+  }
+
+})
+
+registerRouter.get('/view-all-users/', async (req, res) => {
+  try {
+      const user = await userData()
+      if (user[0]) {
+          return res.status(200).json({
+              Success: true,
+              Error: false,
+              data: user
+          });
+      }else{
+          return res.status(400).json({
+              Success: false,
+              Error: true,
+              data: 'No data found'
+          });
+      }
+  } catch (error) {
+      return res.status(400).json({
+          Success: false,
+          Error: true,
+          data: 'Something went wrong'
+      });
+  }
+
+})
 
 
 

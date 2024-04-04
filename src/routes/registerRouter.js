@@ -5,11 +5,26 @@ const workshopData = require('../models/workshopSchema');
 const loginData = require('../models/loginSchema');
 const mechanicData = require('../models/mechanicSchema');
 const userData = require('../models/userSchema');
-
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+require('dotenv').config();
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_KEY,
+    api_secret: process.env.CLOUD_SECRET,
+});
+const storageImage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'bike',
+    },
+});
+const uploadImage = multer({ storage: storageImage });
 
 
 // =====================workshop registration==================================
-registerRouter.post('/workshop', async (req, res, next) => {
+registerRouter.post('/workshop',uploadImage.array('image', 1), async (req, res, next) => {
   try {
     
     const oldEmail = await loginData.findOne({ email: req.body.email });
@@ -51,6 +66,7 @@ registerRouter.post('/workshop', async (req, res, next) => {
       workshop_name: req.body.workshop_name,
       mobile: req.body.mobile,
       address: req.body.address,
+      images: req.files ? req.files.map((file) => file.path) : null,
     };
     const result2 = await workshopData(reg).save();
 

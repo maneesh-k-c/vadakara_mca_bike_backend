@@ -4,6 +4,7 @@ const loginData = require('../models/loginSchema');
 const reviewData = require('../models/reviewSchema');
 const { default: mongoose } = require('mongoose');
 const userData = require('../models/userSchema');
+const partsData = require('../models/partsSchema');
 const userRouter = express.Router();
 
 userRouter.get('/update-user-profile/:id', async (req, res) => {
@@ -147,6 +148,33 @@ userRouter.get('/view-review/:id', async (req, res) => {
                 Error: false,
                 data: review
             });
+        }else{
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+  
+  })
+
+  userRouter.get('/view-all-parts', async (req, res) => {
+    try {
+        const parts = await partsData.find()
+        if (parts[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: parts
+            });
+            
         }else{
             return res.status(400).json({
                 Success: false,

@@ -6,7 +6,7 @@ const mechanicRouter = express.Router();
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-
+require('dotenv').config();
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.CLOUD_KEY,
@@ -15,7 +15,7 @@ cloudinary.config({
 const storageImage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: 'turf',
+        folder: 'bike',
     },
 });
 const uploadImage = multer({ storage: storageImage });
@@ -87,7 +87,7 @@ mechanicRouter.get('/change-password-mechanic/:id', async (req, res) => {
     }
 })
 
-mechanicRouter.post('/add-parts', async (req, res, next) => {
+mechanicRouter.post('/add-parts',uploadImage.array('image', 1), async (req, res, next) => {
     try {
   
   
@@ -98,6 +98,7 @@ mechanicRouter.post('/add-parts', async (req, res, next) => {
         rate: req.body.rate,
         quantity: req.body.quantity,
         description: req.body.description,
+        parts_image: req.files ? req.files.map((file) => file.path) : null,
       };
     
      
@@ -127,32 +128,7 @@ mechanicRouter.post('/add-parts', async (req, res, next) => {
     }
 });
 
-mechanicRouter.get('/view-all-parts', async (req, res) => {
-    try {
-        const parts = await partsData.find()
-        if (parts[0]) {
-            return res.status(200).json({
-                Success: true,
-                Error: false,
-                data: parts
-            });
-            
-        }else{
-            return res.status(400).json({
-                Success: false,
-                Error: true,
-                data: 'No data found'
-            });
-        }
-    } catch (error) {
-        return res.status(400).json({
-            Success: false,
-            Error: true,
-            data: 'Something went wrong'
-        });
-    }
-  
-  })
+
 
 
 

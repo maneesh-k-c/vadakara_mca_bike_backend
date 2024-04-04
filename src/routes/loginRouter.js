@@ -3,6 +3,7 @@ const LoginRouter = express.Router();
 const bcrypt = require('bcryptjs');
 const loginData = require('../models/loginSchema');
 const workshopData = require('../models/workshopSchema');
+const mechanicData = require('../models/mechanicSchema');
 require('dotenv').config();
 
 LoginRouter.post('/', async (req, res, next) => {
@@ -47,6 +48,17 @@ LoginRouter.post('/', async (req, res, next) => {
                     error: false,
                     loginId: oldUser._id,
                     workshopId: worshop._id,
+                    email: oldUser.email,
+                    userRole: oldUser.role,
+                });
+            }
+            if(oldUser.role=='2'){
+                const mech = await mechanicData.findOne({login_id:oldUser._id})
+                return res.status(200).json({
+                    success: true,
+                    error: false,
+                    loginId: oldUser._id,
+                    workshopId: mech.workshop_id,
                     email: oldUser.email,
                     userRole: oldUser.role,
                 });

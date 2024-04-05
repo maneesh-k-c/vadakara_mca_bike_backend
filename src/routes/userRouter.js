@@ -340,10 +340,15 @@ userRouter.get('/view-cart/:id', async (req, res) => {
         ])
         console.log(parts);
         if (parts[0]) {
+            var total = 0
+            parts.forEach((item) => {
+              total += item.subtotal;
+            });
             return res.status(200).json({
+                totalAmount:total,
                 Success: true,
                 Error: false,
-                data: parts
+                data: parts,
             });
 
         } else {

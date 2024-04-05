@@ -7,6 +7,8 @@ const userData = require('../models/userSchema');
 const partsData = require('../models/partsSchema');
 const cartData = require('../models/cartSchema');
 const partsOrderData = require('../models/partsOrderSchema');
+const bikeData = require('../models/bikeSchema');
+const bikeBookingData = require('../models/bikeBookingSchame');
 const userRouter = express.Router();
 
 userRouter.get('/update-user-profile/:id', async (req, res) => {
@@ -334,6 +336,7 @@ userRouter.get('/view-cart/:id', async (req, res) => {
                     'rate': { '$first': '$parts.rate' },
                     'quantity': { '$first': '$parts.quantity' },
                     'subtotal': { '$first': '$subtotal' },
+                    'parts_id': { '$first': '$parts_id' },
                     'status': { '$first': '$status' },
                 }
             }
@@ -411,7 +414,7 @@ userRouter.post('/order-parts/:login_id', async (req, res) => {
                 quantity: existingProduct[i].quantity,
             });
             const old_id = existingProduct[i]._id
-            const update = await cartData.updateOne({ _id: old_id }, { status: "completed" })
+            const update = await cartData.updateOne({ _id: old_id }, { status: "pending" })
             datas.push(await oderData.save());
         }
 
@@ -445,7 +448,7 @@ userRouter.post('/order-parts/:login_id', async (req, res) => {
 
 userRouter.get('/view-orders/:id', async (req, res) => {
     try {
-        const parts = await cartData.aggregate([
+        const order = await partsOrderData.aggregate([
             {
                 '$lookup': {
                   'from': 'parts_tbs', 
@@ -495,12 +498,11 @@ userRouter.get('/view-orders/:id', async (req, res) => {
                 }
             }
         ])
-        console.log(parts);
-        if (parts[0]) {
+        if (order[0]) {
             return res.status(200).json({
                 Success: true,
                 Error: false,
-                data: parts
+                data: order
             });
 
         } else {
@@ -519,5 +521,90 @@ userRouter.get('/view-orders/:id', async (req, res) => {
     }
 
 })
+
+userRouter.get('/view-all-bikes', async (req, res) => {
+    try {
+        const bike = await bikeData.find()
+        if (bike[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: bike
+            });
+            
+        }else{
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+    
+})
+
+userRouter.post('/book-bike/:login_id', async (req, res) => {
+    try {
+        const login_id = req.params.login_id;
+
+        const existingBooking = await bikeBookingData.find({
+            status: 'pending',
+            login_id: login_id,
+        });
+        if(existingBooking[0]){
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Already booked waiting for confirmation',
+
+            });
+        }
+        
+            const bookingData = {
+                bike_id: req.body.bike_id,
+                login_id: login_id,
+                pickup_date: req.body.pickup_date,
+                dropoff_date: req.body.dropoff_date,
+                pickup_time: req.body.pickup_time,
+                bike_quantity: req.body.bike_quantity,
+            }
+            console.log(bookingData);
+            const booking = await bikeBookingData(bookingData).save()
+            if(booking){
+                const bikeDetails = await bikeData.findOne({_id:bookingData.bike_id})
+                const avalable = Number(bikeDetails.quantity)-Number(bookingData.bike_quantity)
+                const update = await bikeData.updateOne({ _id: bookingData.bike_id }, { bike_quantity: avalable })
+            
+                return res.status(200).json({
+                    Success: true,
+                    Error: false,
+                    Message: 'Booking under process',
+                });            
+            } else {
+                return res.status(400).json({
+                    Success: false,
+                    Error: true,
+                    Message: 'Failed to order',
+    
+                });
+            }
+              
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            Success: false,
+            Error: true, 
+            Message: 'Internal Server error',
+            ErrorMessage: error.message,
+        });
+    }
+});
 
 module.exports = userRouter

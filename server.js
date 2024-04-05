@@ -6,6 +6,7 @@ const mechanicRouter = require('./src/routes/mechanicRouter');
 const LoginRouter = require('./src/routes/loginRouter');
 const userRouter = require('./src/routes/userRouter');
 const adminRouter = require('./src/routes/adminRouter');
+const workshopRouter = require('./src/routes/workshopRouter');
 app.use(express.static('./public'))
 require('dotenv').config();
 
@@ -28,6 +29,7 @@ app.use('/api/register',registerRouter)
 app.use('/api/mechanic',mechanicRouter)
 app.use('/api/login',LoginRouter)
 app.use('/api/user',userRouter)
+app.use('/api/workshop',workshopRouter)
 app.use('/admin',adminRouter)
 
 

@@ -3,6 +3,7 @@ const mechanicData = require('../models/mechanicSchema');
 const loginData = require('../models/loginSchema');
 const partsData = require('../models/partsSchema');
 const mechanicRouter = express.Router();
+const partsOrderData = require('../models/partsOrderSchema');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -217,6 +218,113 @@ try {
     });
 }
 });
+
+mechanicRouter.get('/view-orders/:id', async (req, res) => {
+    try {
+        const order = await partsOrderData.aggregate([
+            {
+                '$lookup': {
+                  'from': 'parts_tbs', 
+                  'localField': 'parts_id', 
+                  'foreignField': '_id', 
+                  'as': 'parts'
+                }
+              }, {
+                '$lookup': {
+                  'from': 'workshop_tbs', 
+                  'localField': 'parts.workshop_id', 
+                  'foreignField': '_id', 
+                  'as': 'workshop'
+                }
+              },
+            {
+                '$unwind': '$parts'
+            },
+            {
+                '$unwind': '$workshop'
+            },
+            {
+                '$match': {
+                    'status': 'placed'
+                }
+            },
+            {
+                '$group': {
+                    '_id': '$_id',
+                    'parts_image': {
+                        '$first': {
+                            '$cond': {
+                                if: { '$ne': ['$parts.parts_image', null] },
+                                then: '$parts.parts_image',
+                                else: 'default_image_url',
+                            },
+                        },
+                    },
+                    'part_name': { '$first': '$parts.part_name' },
+                    'workshop_name': { '$first': '$workshop.workshop_name' },
+                    'workshop_login_id': { '$first': '$workshop.login_id' },
+                    'rate': { '$first': '$parts.rate' },
+                    'description': { '$first': '$parts.description' },
+                    'rate': { '$first': '$parts.rate' },
+                    'quantity': { '$first': '$quantity' },
+                    'subtotal': { '$first': '$subtotal' },
+                    'status': { '$first': '$status' },
+                }
+            }
+        ])
+        if (order[0]) {
+            const id = req.params.id
+            const filter = order.filter((item)=>{
+                return item.workshop_login_id==id
+            })
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: order
+            });
+
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+
+})
+
+mechanicRouter.get('/accept-order/:id', async (req, res) => {
+    try {
+        const id = req.params.id
+        const update = await partsOrderData.updateOne({ _id: id }, { $set: {'status':'completed'} })
+        if (update.modifiedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Order status updated',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Error while updating status',
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong!',
+        });
+    }
+})
 
 
 

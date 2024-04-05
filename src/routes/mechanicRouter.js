@@ -193,30 +193,30 @@ mechanicRouter.post('/update-parts/:id',uploadImage.array('image', 1), async (re
 })
 
 mechanicRouter.get('/delete-parts/:id', async (req, res, next) => {
-    try {
-      const id= req.params.id
-      const deleteData = await partsData.deleteOne({ _id: id });
-      if (deleteData.deletedCount==1) {
-        return res.status(200).json({
-          Success: true,
-          Error: false,
-          Message: 'Bike parts deleted',
-        });
-      }else{
-        return res.status(400).json({
-          Success: false,
-          Error: true,
-          Message: 'Failed to delete',
-        });
-      } 
-    } catch (error) {
-      return res.json({
-          Success: false,
-          Error: true,
-          Message: 'Something went wrong',
-        });
-    }
-  });
+try {
+    const id= req.params.id
+    const deleteData = await partsData.deleteOne({ _id: id });
+    if (deleteData.deletedCount==1) {
+    return res.status(200).json({
+        Success: true,
+        Error: false,
+        Message: 'Bike parts deleted',
+    });
+    }else{
+    return res.status(400).json({
+        Success: false,
+        Error: true,
+        Message: 'Failed to delete',
+    });
+    } 
+} catch (error) {
+    return res.json({
+        Success: false,
+        Error: true,
+        Message: 'Something went wrong',
+    });
+}
+});
 
 
 

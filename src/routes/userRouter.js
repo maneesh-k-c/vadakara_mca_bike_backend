@@ -6,6 +6,7 @@ const { default: mongoose } = require('mongoose');
 const userData = require('../models/userSchema');
 const partsData = require('../models/partsSchema');
 const cartData = require('../models/cartSchema');
+const partsOrderData = require('../models/partsOrderSchema');
 const userRouter = express.Router();
 
 userRouter.get('/update-user-profile/:id', async (req, res) => {
@@ -250,45 +251,268 @@ userRouter.post('/add-parts-to-cart/:login_id/:parts_id', async (req, res) => {
     }
 });
 
-userRouter.post('/update-cart-quantity/:login_id/:parts_id',async (req, res) => {
-        try {
-            const login_id = req.params.login_id;
-            const part_id = req.params.parts_id;
-            const quantity = req.body.quantity;
-            const existingProduct = await cartData.findOne({
-                parts_id: part_id,
-                login_id: login_id,
+userRouter.post('/update-cart-quantity/:login_id/:parts_id', async (req, res) => {
+    try {
+        const login_id = req.params.login_id;
+        const part_id = req.params.parts_id;
+        const quantity = req.body.quantity;
+        const existingProduct = await cartData.findOne({
+            parts_id: part_id,
+            login_id: login_id,
+        });
+        const sub = quantity * existingProduct.price
+        const updatedData = await cartData.updateOne(
+            { parts_id: part_id, login_id: login_id },
+
+            { $set: { quantity: quantity, subtotal: sub } }
+        );
+
+        if (updatedData) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: updatedData,
+                Message: 'cart updated successfully',
             });
-            const sub = quantity * existingProduct.price
-            const updatedData = await cartData.updateOne(
-                { parts_id: part_id, login_id: login_id },
-
-                { $set: { quantity: quantity,subtotal: sub } }
-            );
-
-            if (updatedData) {
-                return res.status(200).json({
-                    Success: true,
-                    Error: false,
-                    data: updatedData,
-                    Message: 'cart updated successfully',
-                });
-            } else {
-                return res.status(400).json({
-                    Success: false,
-                    Error: true,
-                    Message: 'Cart update failed',
-                });
-            }
-        } catch (error) {
-            return res.status(500).json({
+        } else {
+            return res.status(400).json({
                 Success: false,
                 Error: true,
-                Message: 'Internal Server error',
-                ErrorMessage: error.message,
+                Message: 'Cart update failed',
             });
         }
+    } catch (error) {
+        return res.status(500).json({
+            Success: false,
+            Error: true,
+            Message: 'Internal Server error',
+            ErrorMessage: error.message,
+        });
     }
+}
 );
+
+userRouter.get('/view-cart/:id', async (req, res) => {
+    try {
+        const parts = await cartData.aggregate([
+            {
+                '$lookup': {
+                    'from': 'parts_tbs',
+                    'localField': 'parts_id',
+                    'foreignField': '_id',
+                    'as': 'parts'
+                }
+            },
+            {
+                '$unwind': '$parts'
+            },
+            {
+                '$match': {
+                    'login_id': new mongoose.Types.ObjectId(req.params.id)
+                }
+            },
+            {
+                '$match': {
+                    'status': 'pending'
+                }
+            },
+            {
+                '$group': {
+                    '_id': '$_id',
+                    'parts_image': {
+                        '$first': {
+                            '$cond': {
+                                if: { '$ne': ['$parts.parts_image', null] },
+                                then: '$parts.parts_image',
+                                else: 'default_image_url',
+                            },
+                        },
+                    },
+                    'part_name': { '$first': 'parts.part_name' },
+                    'rate': { '$first': 'parts.rate' },
+                    'description': { '$first': 'parts.description' },
+                    'rate': { '$first': 'parts.rate' },
+                    'quantity': { '$first': 'parts.quantity' },
+                    'subtotal': { '$first': 'parts.subtotal' },
+                    'status': { '$first': 'parts.status' },
+                }
+            }
+        ])
+        console.log(parts);
+        if (parts[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: parts
+            });
+
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+
+})
+
+userRouter.get('/delete-cart/:id', async (req, res, next) => {
+    try {
+        const id = req.params.id
+        const deleteData = await cartData.deleteOne({ _id: id });
+        if (deleteData.deletedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Data removed from cart',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Failed to delete',
+            });
+        }
+    } catch (error) {
+        return res.json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong',
+        });
+    }
+});
+
+userRouter.post('/order-parts/:login_id', async (req, res) => {
+    try {
+        const login_id = req.params.login_id;
+
+        const existingProduct = await cartData.find({
+            status: 'pending',
+            login_id: login_id,
+        });
+        const datas = [];
+        for (let i = 0; i < existingProduct.length; i++) {
+            const oderData = new partsOrderData({
+                parts_id: existingProduct[i].parts_id,
+                login_id: login_id,
+                subtotal: existingProduct[i].subtotal,
+                quantity: existingProduct[i].quantity,
+            });
+            const old_id = existingProduct[i]._id
+            const update = await cartData.updateOne({ _id: old_id }, { status: "completed" })
+            datas.push(await oderData.save());
+        }
+
+        if (datas[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Order placed',
+            });
+        }
+        else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Failed to order',
+
+            });
+        }
+
+
+
+    } catch (error) {
+        return res.status(500).json({
+            Success: false,
+            Error: true,
+            Message: 'Internal Server error',
+            ErrorMessage: error.message,
+        });
+    }
+});
+
+userRouter.get('/view-orders/:id', async (req, res) => {
+    try {
+        const parts = await cartData.aggregate([
+            {
+                '$lookup': {
+                  'from': 'parts_tbs', 
+                  'localField': 'parts_id', 
+                  'foreignField': '_id', 
+                  'as': 'parts'
+                }
+              }, {
+                '$lookup': {
+                  'from': 'workshop_tbs', 
+                  'localField': 'parts.workshop_id', 
+                  'foreignField': '_id', 
+                  'as': 'workshop'
+                }
+              },
+            {
+                '$unwind': '$parts'
+            },
+            {
+                '$unwind': '$workshop'
+            },
+            {
+                '$match': {
+                    'login_id': new mongoose.Types.ObjectId(req.params.id)
+                }
+            },
+            {
+                '$group': {
+                    '_id': '$_id',
+                    'parts_image': {
+                        '$first': {
+                            '$cond': {
+                                if: { '$ne': ['$parts.parts_image', null] },
+                                then: '$parts.parts_image',
+                                else: 'default_image_url',
+                            },
+                        },
+                    },
+                    'part_name': { '$first': 'parts.part_name' },
+                    'workshop_name': { '$first': 'workshop.workshop_name' },
+                    'rate': { '$first': 'parts.rate' },
+                    'description': { '$first': 'parts.description' },
+                    'rate': { '$first': 'parts.rate' },
+                    'quantity': { '$first': 'parts.quantity' },
+                    'subtotal': { '$first': 'parts.subtotal' },
+                    'status': { '$first': 'parts.status' },
+                }
+            }
+        ])
+        console.log(parts);
+        if (parts[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: parts
+            });
+
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+
+})
 
 module.exports = userRouter

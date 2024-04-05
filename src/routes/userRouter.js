@@ -328,13 +328,13 @@ userRouter.get('/view-cart/:id', async (req, res) => {
                             },
                         },
                     },
-                    'part_name': { '$first': 'parts.part_name' },
-                    'rate': { '$first': 'parts.rate' },
-                    'description': { '$first': 'parts.description' },
-                    'rate': { '$first': 'parts.rate' },
-                    'quantity': { '$first': 'parts.quantity' },
-                    'subtotal': { '$first': 'parts.subtotal' },
-                    'status': { '$first': 'parts.status' },
+                    'part_name': { '$first': '$parts.part_name' },
+                    'rate': { '$first': '$parts.rate' },
+                    'description': { '$first': '$parts.description' },
+                    'rate': { '$first': '$parts.rate' },
+                    'quantity': { '$first': '$parts.quantity' },
+                    'subtotal': { '$first': '$subtotal' },
+                    'status': { '$first': '$status' },
                 }
             }
         ])

@@ -334,7 +334,7 @@ userRouter.get('/view-cart/:id', async (req, res) => {
                     'rate': { '$first': '$parts.rate' },
                     'description': { '$first': '$parts.description' },
                     'rate': { '$first': '$parts.rate' },
-                    'quantity': { '$first': '$parts.quantity' },
+                    'quantity': { '$first': '$quantity' },
                     'subtotal': { '$first': '$subtotal' },
                     'parts_id': { '$first': '$parts_id' },
                     'status': { '$first': '$status' },
@@ -573,6 +573,7 @@ userRouter.post('/book-bike/:login_id', async (req, res) => {
                 dropoff_date: req.body.dropoff_date,
                 pickup_time: req.body.pickup_time,
                 bike_quantity: req.body.bike_quantity,
+                
             }
             console.log(bookingData);
             const booking = await bikeBookingData(bookingData).save()
@@ -606,5 +607,64 @@ userRouter.post('/book-bike/:login_id', async (req, res) => {
         });
     }
 });
+
+userRouter.get('/view-all-bike-booking/:id', async (req, res) => {
+    try {
+        const login = req.params.id
+        const bike = await bikeBookingData.aggregate([
+            {
+              '$lookup': {
+                'from': 'bike_tbs', 
+                'localField': 'bike_id', 
+                'foreignField': '_id', 
+                'as': 'bike'
+              }
+            },
+            {
+                '$unwind':'$bike'
+            },
+            {
+                '$match':{
+                    'login_id':new mongoose.Types.ObjectId(login)
+                }
+            },
+            {
+                '$group':{
+                    '_id':'$_id',
+                    'login_id':{'$first':'$login_id'},
+                    'bike_id':{'$first':'$bike_id'},
+                    'pickup_date':{'$first':'$pickup_date'},
+                    'dropoff_date':{'$first':'$dropoff_date'},
+                    'pickup_time':{'$first':'$pickup_time'},
+                    'bike_quantity':{'$first':'$bike_quantity'},
+                    'status':{'$first':'$status'},
+                    'bike_name':{'$first':'$bike.bike_name'},
+                    'bike_image':{'$first':'$bike.bike_image'},
+                }
+            }
+          ])
+        if (bike[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: bike
+            });
+            
+        }else{
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+    
+})
 
 module.exports = userRouter

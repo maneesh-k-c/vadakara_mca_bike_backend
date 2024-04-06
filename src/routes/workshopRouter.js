@@ -5,6 +5,8 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const bikeData = require('../models/bikeSchema');
 const reviewData = require('../models/reviewSchema');
+const bikeBookingData = require('../models/bikeBookingSchame');
+const { default: mongoose } = require('mongoose');
 require('dotenv').config();
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
@@ -19,17 +21,17 @@ const storageImage = new CloudinaryStorage({
 });
 const uploadImage = multer({ storage: storageImage });
 
-workshopRouter.post('/add-bike',uploadImage.array('image', 1), async (req, res, next) => {
+workshopRouter.post('/add-bike', uploadImage.array('image', 1), async (req, res, next) => {
     try {
-        const oldBike = await bikeData.findOne({ bike_name: req.body.bike_name,workshop_id:req.body.workshop_id });
+        const oldBike = await bikeData.findOne({ bike_name: req.body.bike_name, workshop_id: req.body.workshop_id });
         if (oldBike) {
-          return res.status(400).json({
-            Success: false,
-            Error: true,
-            Message: 'Bike already existc',
-          });
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Bike already existc',
+            });
         }
- 
+
         let details = {
             workshop_id: req.body.workshop_id,
             bike_name: req.body.bike_name,
@@ -68,33 +70,33 @@ workshopRouter.post('/add-bike',uploadImage.array('image', 1), async (req, res, 
 });
 
 workshopRouter.get('/view-all-bike/:id', async (req, res) => {
-try {
-    const bike = await bikeData.find({workshop_id:req.params.id})
-    if (bike[0]) {
-        return res.status(200).json({
-            Success: true,
-            Error: false,
-            data: bike
-        });
-        
-    }else{
+    try {
+        const bike = await bikeData.find({ workshop_id: req.params.id })
+        if (bike[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: bike
+            });
+
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
         return res.status(400).json({
             Success: false,
             Error: true,
-            data: 'No data found'
+            data: 'Something went wrong'
         });
     }
-} catch (error) {
-    return res.status(400).json({
-        Success: false,
-        Error: true,
-        data: 'Something went wrong'
-    });
-}
 
 })
 
-workshopRouter.post('/update-bike/:id',uploadImage.array('image', 1), async (req, res) => {
+workshopRouter.post('/update-bike/:id', uploadImage.array('image', 1), async (req, res) => {
     try {
         const id = req.params.id
         const oldData = await bikeData({ _id: id });
@@ -105,9 +107,9 @@ workshopRouter.post('/update-bike/:id',uploadImage.array('image', 1), async (req
             quantity: req.body.quantity ? req.body.quantity : oldData.quantity,
             description: req.body.description ? req.body.description : oldData.description,
             bike_image: req.files ? req.files.map((file) => file.path) : oldData.bike_image,
-          
+
         };
-        
+
         console.log(updateData);
         const update = await bikeData.updateOne({ _id: id }, { $set: updateData })
         if (update.modifiedCount == 1) {
@@ -133,29 +135,29 @@ workshopRouter.post('/update-bike/:id',uploadImage.array('image', 1), async (req
 })
 
 workshopRouter.get('/delete-bike/:id', async (req, res, next) => {
-try {
-    const id= req.params.id
-    const deleteData = await bikeData.deleteOne({ _id: id });
-    if (deleteData.deletedCount==1) {
-    return res.status(200).json({
-        Success: true,
-        Error: false,
-        Message: 'Bike deleted',
-    });
-    }else{
-    return res.status(400).json({
-        Success: false,
-        Error: true,
-        Message: 'Failed to delete',
-    });
-    } 
-} catch (error) {
-    return res.json({
-        Success: false,
-        Error: true,
-        Message: 'Something went wrong',
-    });
-}
+    try {
+        const id = req.params.id
+        const deleteData = await bikeData.deleteOne({ _id: id });
+        if (deleteData.deletedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Bike deleted',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Failed to delete',
+            });
+        }
+    } catch (error) {
+        return res.json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong',
+        });
+    }
 });
 
 
@@ -212,7 +214,75 @@ workshopRouter.get('/view-review/:id', async (req, res) => {
 
 })
 
+workshopRouter.get('/view-all-bike-booking/:workshopId', async (req, res) => {
+    try {
+        const id = req.params.workshopId
+        const bike = await bikeBookingData.aggregate([
+            {
+                '$lookup': {
+                    'from': 'bike_tbs',
+                    'localField': 'bike_id',
+                    'foreignField': '_id',
+                    'as': 'bike'
+                }
+            }, {
+                '$lookup': {
+                    'from': 'workshop_tbs',
+                    'localField': 'bike.workshop_id',
+                    'foreignField': '_id',
+                    'as': 'workshop'
+                }
+            },
+            {
+                '$unwind': '$bike'
+            },
+            {
+                '$unwind': '$workshop'
+            },
+            {
+                '$match': {
+                    'workshop._id': new mongoose.Types.ObjectId(id)
+                }
+            },
+            {
+                '$group': {
+                    '_id': '$_id',
+                    'login_id': { '$first': '$login_id' },
+                    'bike_id': { '$first': '$bike_id' },
+                    'pickup_date': { '$first': '$pickup_date' },
+                    'dropoff_date': { '$first': '$dropoff_date' },
+                    'pickup_time': { '$first': '$pickup_time' },
+                    'bike_quantity': { '$first': '$bike_quantity' },
+                    'status': { '$first': '$status' },
+                    'bike_name': { '$first': '$bike.bike_name' },
+                    'bike_image': { '$first': '$bike.bike_image' },
+                }
+            }
+        ])
+        console.log(bike);
+        if (bike[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: bike
+            });
 
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+
+})
 
 
 

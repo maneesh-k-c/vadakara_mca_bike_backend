@@ -21,15 +21,15 @@ const storageImage = new CloudinaryStorage({
 });
 const uploadImage = multer({ storage: storageImage });
 
-mechanicRouter.get('/update-mechanic-profile/:id', async (req, res) => {
+mechanicRouter.post('/update-mechanic-profile/:id', async (req, res) => {
     try {
         const id = req.params.id
         const oldData = await mechanicData.findOne({ login_id: id });
         let reg = {
-            name: req.query.name ? req.query.name : oldData.name,
-            mobile: req.query.mobile ? req.query.mobile : oldData.mobile,
-            address: req.query.address ? req.query.address : oldData.address,
-            qualification: req.query.qualification ? req.query.qualification : oldData.qualification
+            name: req.body.name ? req.body.name : oldData.name,
+            mobile: req.body.mobile ? req.body.mobile : oldData.mobile,
+            address: req.body.address ? req.body.address : oldData.address,
+            qualification: req.body.qualification ? req.body.qualification : oldData.qualification
         };
 
         console.log(reg);

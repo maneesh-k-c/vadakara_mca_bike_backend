@@ -37,11 +37,6 @@ app.get('/', (req, res) => {
   res.render('login.ejs',{Message:''})
 });
 
-
-
-
-
-
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on ${process.env.PORT}`);
 });

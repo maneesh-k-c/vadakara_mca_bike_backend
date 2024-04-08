@@ -9,6 +9,7 @@ const userData = require('../models/userSchema');
 const mechanicData = require('../models/mechanicSchema');
 const workshopData = require('../models/workshopSchema');
 const reviewData = require('../models/reviewSchema');
+const bikeData = require('../models/bikeSchema');
 
 
 adminRouter.post('/login', async (req, res, next) => {
@@ -40,7 +41,11 @@ adminRouter.post('/login', async (req, res, next) => {
     }
 });
 adminRouter.get('/dashboard', async (req, res) => {
-    res.render('dashboard')
+    const users = await userData.find()
+    const workshops = await workshopData.find()
+    const mechanics = await mechanicData.find()
+    const bike = await bikeData.find()
+    res.render('dashboard',{users,workshops,mechanics,bike})
 })
 adminRouter.get('/view-users', async (req, res) => {
     try {

@@ -2,48 +2,36 @@
 <html>
     <%- include('./modules/head') %>
 <body>
-    <!--  wrapper -->
     <div id="wrapper">
-        <!-- navbar top -->
         <%- include('./modules/nav') %>
-        <!-- end navbar top -->
-
-        <!-- navbar side -->
         <%- include('./modules/side-nav') %>
-        <!-- end navbar side -->
-        <!--  page-wrapper -->
         <div id="page-wrapper">
 
             <div class="row">
-                <!-- Page Header -->
                 <div class="col-lg-12">
                     <h1 class="page-header">Dashboard</h1>
                 </div>
-                <!--End Page Header -->
             </div>
 
             <div class="row">
-                <!-- Welcome -->
                 <div class="col-lg-12">
                     <div class="alert alert-info">
                         <i class="fa fa-folder-open"></i><b>&nbsp;Hello ! </b>Welcome Back <b>Admin </b>
  
                     </div>
                 </div>
-                <!--end  Welcome -->
             </div>
 
 
             <div class="row">
-                <!--quick info section -->
                 <div class="col-lg-3">
                     <div class="panel panel-primary text-center no-boder">
                         <div class="panel-body yellow">
-                            <i class="fa fa-bar-chart-o fa-3x"></i>
-                            <h3>20,741 </h3>
+                            <i class="fa fa-users fa-3x"></i>
+                            <h3><%=users.length%> </h3>
                         </div>
                         <div class="panel-footer">
-                            <span class="panel-eyecandy-title">Daily User Visits
+                            <span class="panel-eyecandy-title">Registered Users
                             </span>
                         </div>
                     </div>
@@ -52,11 +40,11 @@
                 <div class="col-lg-3">
                     <div class="panel panel-primary text-center no-boder">
                         <div class="panel-body blue">
-                            <i class="fa fa-pencil-square-o fa-3x"></i>
-                            <h3>2,060 </h3>
+                            <i class="fa fa-building-o fa-3x"></i>
+                            <h3><%=workshops.length%></h3>
                         </div>
                         <div class="panel-footer">
-                            <span class="panel-eyecandy-title">Pending Orders Found
+                            <span class="panel-eyecandy-title">Registered Workshops
                             </span>
                         </div>
                     </div>
@@ -65,11 +53,11 @@
                 <div class="col-lg-3">
                     <div class="panel panel-primary text-center no-boder">
                         <div class="panel-body green">
-                            <i class="fa fa fa-floppy-o fa-3x"></i>
-                            <h3>20 GB</h3>
+                            <i class="fa fa-users fa-3x"></i>
+                            <h3><%=mechanics.length%></h3>
                         </div>
                         <div class="panel-footer">
-                            <span class="panel-eyecandy-title">New Data Uploaded
+                            <span class="panel-eyecandy-title">Registered Mechanics
                             </span>
                         </div>
                     </div>
@@ -78,16 +66,15 @@
                 <div class="col-lg-3">
                     <div class="panel panel-primary text-center no-boder">
                         <div class="panel-body red">
-                            <i class="fa fa-thumbs-up fa-3x"></i>
-                            <h3>2,700 </h3>
+                            <i class="fa fa-ticket fa-3x" aria-hidden="true"></i>
+                            <h3><%=bike.length%></h3>
                         </div>
                         <div class="panel-footer">
-                            <span class="panel-eyecandy-title">New User Registered
+                            <span class="panel-eyecandy-title">Bikes for rent
                             </span>
                         </div>
                     </div>
                 </div>
-                <!--end quick info section -->
             </div>
 
       
@@ -98,18 +85,13 @@
 
 
         </div>
-        <!-- end page-wrapper -->
 
     </div>
-    <!-- end wrapper -->
-
-    <!-- Core Scripts - Include with every page -->
     <script src="assets/plugins/jquery-1.10.2.js"></script>
     <script src="assets/plugins/bootstrap/bootstrap.min.js"></script>
     <script src="assets/plugins/metisMenu/jquery.metisMenu.js"></script>
     <script src="assets/plugins/pace/pace.js"></script>
     <script src="assets/scripts/siminta.js"></script>
-    <!-- Page-Level Plugin Scripts-->
     <script src="assets/plugins/morris/raphael-2.1.0.min.js"></script>
     <script src="assets/plugins/morris/morris.js"></script>
     <script src="assets/scripts/dashboard-demo.js"></script>

@@ -31,7 +31,7 @@ mechanicRouter.get('/update-mechanic-profile/:id', async (req, res) => {
             address: req.query.address ? req.query.address : oldData.address,
             qualification: req.query.qualification ? req.query.qualification : oldData.qualification
         };
-        
+
         console.log(reg);
         const update = await mechanicData.updateOne({ login_id: id }, { $set: reg })
         if (update.modifiedCount == 1) {
@@ -63,7 +63,7 @@ mechanicRouter.get('/change-password-mechanic/:id', async (req, res) => {
         let reg = {
             password: req.query.password ? req.query.password : oldData.password,
         };
-        
+
         console.log(reg);
         const update = await loginData.updateOne({ _id: id }, { $set: reg })
         if (update.modifiedCount == 1) {
@@ -88,75 +88,75 @@ mechanicRouter.get('/change-password-mechanic/:id', async (req, res) => {
     }
 })
 
-mechanicRouter.post('/add-parts',uploadImage.array('image', 1), async (req, res, next) => {
+mechanicRouter.post('/add-parts', uploadImage.array('image', 1), async (req, res, next) => {
     try {
-  
-  
-      let details = {
-        login_id: req.body.login_id,
-        workshop_id: req.body.workshop_id,
-        part_name: req.body.part_name,
-        rate: req.body.rate,
-        quantity: req.body.quantity,
-        description: req.body.description,
-        parts_image: req.files ? req.files.map((file) => file.path) : null,
-      };
-    
-     
+
+
+        let details = {
+            login_id: req.body.login_id,
+            workshop_id: req.body.workshop_id,
+            part_name: req.body.part_name,
+            rate: req.body.rate,
+            quantity: req.body.quantity,
+            description: req.body.description,
+            parts_image: req.files ? req.files.map((file) => file.path) : null,
+        };
+
+
         const result2 = await partsData(details).save();
         if (result2) {
-          return res.status(200).json({
-            Success: true,
-            Error: false,
-            data: result2,
-            Message: 'Parts added',
-          });
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: result2,
+                Message: 'Parts added',
+            });
         } else {
-          return res.status(400).json({
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Failed to add parts',
+            });
+
+        }
+
+    } catch (error) {
+        return res.status(400).json({
             Success: false,
             Error: true,
-            Message: 'Failed to add parts',
-          });
-  
-        }
-      
-    } catch (error) {
-      return res.status(400).json({
-        Success: false,
-        Error: true,
-        Message: 'Something went wrong',
-      });
+            Message: 'Something went wrong',
+        });
     }
 });
 
 mechanicRouter.get('/view-all-parts/:id', async (req, res) => {
-try {
-    const parts = await partsData.find({workshop_id:req.params.id})
-    if (parts[0]) {
-        return res.status(200).json({
-            Success: true,
-            Error: false,
-            data: parts
-        });
-        
-    }else{
+    try {
+        const parts = await partsData.find({ workshop_id: req.params.id })
+        if (parts[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: parts
+            });
+
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
         return res.status(400).json({
             Success: false,
             Error: true,
-            data: 'No data found'
+            data: 'Something went wrong'
         });
     }
-} catch (error) {
-    return res.status(400).json({
-        Success: false,
-        Error: true,
-        data: 'Something went wrong'
-    });
-}
 
 })
 
-mechanicRouter.post('/update-parts/:id',uploadImage.array('image', 1), async (req, res) => {
+mechanicRouter.post('/update-parts/:id', uploadImage.array('image', 1), async (req, res) => {
     try {
         const id = req.params.id
         const oldData = await partsData.findOne({ _id: id });
@@ -166,9 +166,9 @@ mechanicRouter.post('/update-parts/:id',uploadImage.array('image', 1), async (re
             quantity: req.body.quantity ? req.body.quantity : oldData.quantity,
             description: req.body.description ? req.body.description : oldData.description,
             parts_image: req.files ? req.files.map((file) => file.path) : oldData.parts_image,
-          
+
         };
-        
+
         console.log(parts);
         const update = await partsData.updateOne({ _id: id }, { $set: parts })
         if (update.modifiedCount == 1) {
@@ -194,29 +194,29 @@ mechanicRouter.post('/update-parts/:id',uploadImage.array('image', 1), async (re
 })
 
 mechanicRouter.get('/delete-parts/:id', async (req, res, next) => {
-try {
-    const id= req.params.id
-    const deleteData = await partsData.deleteOne({ _id: id });
-    if (deleteData.deletedCount==1) {
-    return res.status(200).json({
-        Success: true,
-        Error: false,
-        Message: 'Bike parts deleted',
-    });
-    }else{
-    return res.status(400).json({
-        Success: false,
-        Error: true,
-        Message: 'Failed to delete',
-    });
-    } 
-} catch (error) {
-    return res.json({
-        Success: false,
-        Error: true,
-        Message: 'Something went wrong',
-    });
-}
+    try {
+        const id = req.params.id
+        const deleteData = await partsData.deleteOne({ _id: id });
+        if (deleteData.deletedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Bike parts deleted',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Failed to delete',
+            });
+        }
+    } catch (error) {
+        return res.json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong',
+        });
+    }
 });
 
 mechanicRouter.get('/view-orders/:id', async (req, res) => {
@@ -224,19 +224,19 @@ mechanicRouter.get('/view-orders/:id', async (req, res) => {
         const order = await partsOrderData.aggregate([
             {
                 '$lookup': {
-                  'from': 'parts_tbs', 
-                  'localField': 'parts_id', 
-                  'foreignField': '_id', 
-                  'as': 'parts'
+                    'from': 'parts_tbs',
+                    'localField': 'parts_id',
+                    'foreignField': '_id',
+                    'as': 'parts'
                 }
-              }, {
+            }, {
                 '$lookup': {
-                  'from': 'workshop_tbs', 
-                  'localField': 'parts.workshop_id', 
-                  'foreignField': '_id', 
-                  'as': 'workshop'
+                    'from': 'workshop_tbs',
+                    'localField': 'parts.workshop_id',
+                    'foreignField': '_id',
+                    'as': 'workshop'
                 }
-              },
+            },
             {
                 '$unwind': '$parts'
             },
@@ -274,8 +274,8 @@ mechanicRouter.get('/view-orders/:id', async (req, res) => {
         ])
         if (order[0]) {
             const id = req.params.id
-            const filter = order.filter((item)=>{
-                return item.workshop_login_id==id
+            const filter = order.filter((item) => {
+                return item.workshop_login_id == id
             })
             return res.status(200).json({
                 Success: true,
@@ -303,7 +303,33 @@ mechanicRouter.get('/view-orders/:id', async (req, res) => {
 mechanicRouter.get('/accept-order/:id', async (req, res) => {
     try {
         const id = req.params.id
-        const update = await partsOrderData.updateOne({ _id: id }, { $set: {'status':'completed'} })
+        const update = await partsOrderData.updateOne({ _id: id }, { $set: { 'status': 'completed' } })
+        if (update.modifiedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Order status updated',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Error while updating status',
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong!',
+        });
+    }
+})
+
+mechanicRouter.get('/reject-order/:id', async (req, res) => {
+    try {
+        const id = req.params.id
+        const update = await partsOrderData.updateOne({ _id: id }, { $set: { 'status': 'rejected' } })
         if (update.modifiedCount == 1) {
             return res.status(200).json({
                 Success: true,

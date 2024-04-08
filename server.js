@@ -34,7 +34,7 @@ app.use('/admin',adminRouter)
 
 
 app.get('/', (req, res) => {
-  res.render('login.ejs',{Message: ''})
+  res.render('login.ejs',{Message:''})
 });
 
 

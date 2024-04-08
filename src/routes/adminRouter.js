@@ -340,6 +340,9 @@ adminRouter.get('/view-reviews', async (req, res) => {
                     'workshop_mobile': {
                         '$first': '$workshop.mobile'
                     }, 
+                    'review': {
+                        '$first': '$review'
+                    }, 
                     
                 }
             }
@@ -362,7 +365,9 @@ adminRouter.get('/view-reviews', async (req, res) => {
     
 })
 
-
+adminRouter.get('/logout', async (req, res) => {
+    res.redirect('/')
+})
 
 
 

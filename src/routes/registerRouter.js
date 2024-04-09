@@ -211,38 +211,40 @@ registerRouter.post('/mechanic', async (req, res, next) => {
 
 registerRouter.get('/workshop-view-all-registered-mechanics/:id', async (req, res) => {
   try {
-    const mechanic = await mechanicData.aggregate({
-      '$lookup': {
-        'from': 'login_tbs',
-        'localField': 'login_id',
-        'foreignField': '_id',
-        'as': 'login'
-      }
-    },
+    console.log('hi');
+    const mechanic = await mechanicData.aggregate([
       {
-        '$unwind': {
-          'path': '$login'
+        '$lookup': {
+          'from': 'login_tbs',
+          'localField': 'login_id',
+          'foreignField': '_id',
+          'as': 'login'
         }
       },
       {
-        '$match':{
+        '$unwind': '$login'
+
+      },
+      {
+        '$match': {
           'workshop_id': new mongoose.Types.ObjectId(req.params.id)
         }
       },
       {
-        '$group':{
-          '_id':'$_id',
-          'login_id':{'first':'$login_id'},
-          'name':{'first':'$name'},
-          'address':{'first':'$address'},
-          'mobile':{'first':'$mobile'},
-          'status':{'first':'$login.status'},
+        '$group': {
+          '_id': '$_id',
+          'login_id': { '$first': '$login_id' },
+          'name': { '$first': '$name' },
+          'address': { '$first': '$address' },
+          'mobile': { '$first': '$mobile' },
+          'status': { '$first': '$login.status' },
         }
       }
+      ]
     )
 
+    console.log(mechanic);
 
-      .find({  })
     if (mechanic[0]) {
       return res.status(200).json({
         Success: true,

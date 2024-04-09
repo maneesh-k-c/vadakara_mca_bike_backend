@@ -6,6 +6,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const bikeData = require('../models/bikeSchema');
 const reviewData = require('../models/reviewSchema');
 const bikeBookingData = require('../models/bikeBookingSchame');
+const workshopData = require('../models/workshopSchema');
 const { default: mongoose } = require('mongoose');
 require('dotenv').config();
 cloudinary.config({
@@ -286,7 +287,39 @@ workshopRouter.get('/view-all-bike-booking/:workshopId', async (req, res) => {
 
 
 
+workshopRouter.post('/update-workshop-profile/:id', async (req, res) => {
+    try {
+        const id = req.params.id
+        const oldData = await workshopData.findOne({ login_id: id });
+        let reg = {
+            workshop_name: req.body.workshop_name ? req.body.workshop_name : oldData.workshop_name,
+            mobile: req.body.mobile ? req.body.mobile : oldData.mobile,
+            address: req.body.address ? req.body.address : oldData.address,
+        };
 
+        console.log(reg);
+        const update = await workshopData.updateOne({ login_id: id }, { $set: reg })
+        if (update.modifiedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Profile updated',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Error while updating profile',
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong!',
+        });
+    }
+})
 
 
 

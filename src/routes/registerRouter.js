@@ -9,24 +9,25 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
+const { default: mongoose } = require('mongoose');
 cloudinary.config({
-    cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.CLOUD_KEY,
-    api_secret: process.env.CLOUD_SECRET,
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
 });
 const storageImage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'bike',
-    },
+  cloudinary: cloudinary,
+  params: {
+    folder: 'bike',
+  },
 });
 const uploadImage = multer({ storage: storageImage });
 
 
 // =====================workshop registration==================================
-registerRouter.post('/workshop',uploadImage.array('image', 1), async (req, res, next) => {
+registerRouter.post('/workshop', uploadImage.array('image', 1), async (req, res, next) => {
   try {
-    
+
     const oldEmail = await loginData.findOne({ email: req.body.email });
     if (oldEmail) {
       return res.status(400).json({
@@ -51,13 +52,13 @@ registerRouter.post('/workshop',uploadImage.array('image', 1), async (req, res, 
         Message: 'Mobile number already exist',
       });
     }
-    
+
     const hashedPassword = await bcrypt.hash(req.body.password, 12);
     let log = {
       email: req.body.email,
       password: hashedPassword,
       role: 1,
-      status:0
+      status: 0
     };
     const result = await loginData(log).save();
     console.log(result);
@@ -86,61 +87,61 @@ registerRouter.post('/workshop',uploadImage.array('image', 1), async (req, res, 
     }
   } catch (error) {
     return res.json({
-        Success: false,
-        Error: true,
-        Message: 'Something went wrong',
-      });
+      Success: false,
+      Error: true,
+      Message: 'Something went wrong',
+    });
   }
 });
 
 registerRouter.get('/view-all-workshops', async (req, res) => {
   try {
-      const workshop = await workshopData.find()
-      if (workshop[0]) {
-          return res.status(200).json({
-              Success: true,
-              Error: false,
-              data: workshop
-          });
-      }else{
-          return res.status(400).json({
-              Success: false,
-              Error: true,
-              data: 'No data found'
-          });
-      }
-  } catch (error) {
-      return res.status(400).json({
-          Success: false,
-          Error: true,
-          data: 'Something went wrong'
+    const workshop = await workshopData.find()
+    if (workshop[0]) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        data: workshop
       });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        data: 'No data found'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      Success: false,
+      Error: true,
+      data: 'Something went wrong'
+    });
   }
 
 })
 
 registerRouter.get('/view-single-workshop/:id', async (req, res) => {
   try {
-      const workshop = await workshopData.findOne({login_id:req.params.id})
-      if (workshop) {
-          return res.status(200).json({
-              Success: true,
-              Error: false,
-              data: workshop
-          });
-      }else{
-          return res.status(400).json({
-              Success: false,
-              Error: true,
-              data: 'No data found'
-          });
-      }
-  } catch (error) {
-      return res.status(400).json({
-          Success: false,
-          Error: true,
-          data: 'Something went wrong'
+    const workshop = await workshopData.findOne({ login_id: req.params.id })
+    if (workshop) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        data: workshop
       });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        data: 'No data found'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      Success: false,
+      Error: true,
+      data: 'Something went wrong'
+    });
   }
 
 })
@@ -164,13 +165,13 @@ registerRouter.post('/mechanic', async (req, res, next) => {
         Message: 'Mobile number already exist',
       });
     }
-    
+
     const hashedPassword = await bcrypt.hash(req.body.password, 12);
     let log = {
       email: req.body.email,
       password: hashedPassword,
       role: 2,
-      status:0
+      status: 0
     };
     const result = await loginData(log).save();
 
@@ -201,82 +202,113 @@ registerRouter.post('/mechanic', async (req, res, next) => {
     }
   } catch (error) {
     return res.json({
-        Success: false,
-        Error: true,
-        Message: 'Something went wrong',
-      });
+      Success: false,
+      Error: true,
+      Message: 'Something went wrong',
+    });
   }
 });
 
 registerRouter.get('/workshop-view-all-registered-mechanics/:id', async (req, res) => {
   try {
-      const mechanic = await mechanicData.find({workshop_id:req.params.id})
-      if (mechanic[0]) {
-          return res.status(200).json({
-              Success: true,
-              Error: false,
-              data: mechanic
-          });
-      }else{
-          return res.status(400).json({
-              Success: false,
-              Error: true,
-              data: 'No data found'
-          });
+    const mechanic = await mechanicData.aggregate({
+      '$lookup': {
+        'from': 'login_tbs',
+        'localField': 'login_id',
+        'foreignField': '_id',
+        'as': 'login'
       }
-  } catch (error) {
-      return res.status(400).json({
-          Success: false,
-          Error: true,
-          data: 'Something went wrong'
+    },
+      {
+        '$unwind': {
+          'path': '$login'
+        }
+      },
+      {
+        '$match':{
+          'workshop_id': new mongoose.Types.ObjectId(req.params.id)
+        }
+      },
+      {
+        '$group':{
+          '_id':'$_id',
+          'login_id':{'first':'$login_id'},
+          'name':{'first':'$name'},
+          'address':{'first':'$address'},
+          'mobile':{'first':'$mobile'},
+          'status':{'first':'$login.status'},
+        }
+      }
+    )
+
+
+      .find({  })
+    if (mechanic[0]) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        data: mechanic
       });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        data: 'No data found'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      Success: false,
+      Error: true,
+      data: 'Something went wrong'
+    });
   }
 
 })
 
 registerRouter.get('/view-single-mechanic/:id', async (req, res) => {
   try {
-      const mechanic = await mechanicData.findOne({login_id:req.params.id})
-      if (mechanic) {
-          return res.status(200).json({
-              Success: true,
-              Error: false,
-              data: mechanic
-          });
-      }else{
-          return res.status(400).json({
-              Success: false,
-              Error: true,
-              data: 'No data found'
-          });
-      }
-  } catch (error) {
-      return res.status(400).json({
-          Success: false,
-          Error: true,
-          data: 'Something went wrong'
+    const mechanic = await mechanicData.findOne({ login_id: req.params.id })
+    if (mechanic) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        data: mechanic
       });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        data: 'No data found'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      Success: false,
+      Error: true,
+      data: 'Something went wrong'
+    });
   }
 
 })
 
 registerRouter.get('/approve-mechanic/:_id', async (req, res) => {
   try {
-      const id = req.params._id
-      const update = await loginData.updateOne({ _id: id }, { $set: { status: 1 } })
-      if (update.modifiedCount == 1) {
-        return res.status(200).json({
-          Success: true,
-          Error: false,
-          Message: 'Status updated',
-        });
-      } else {
-        return res.status(400).json({
-          Success: false,
-          Error: true,
-          Message: 'Error while updating status',
-        });
-      }
+    const id = req.params._id
+    const update = await loginData.updateOne({ _id: id }, { $set: { status: 1 } })
+    if (update.modifiedCount == 1) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        Message: 'Status updated',
+      });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        Message: 'Error while updating status',
+      });
+    }
   } catch (error) {
     return res.status(400).json({
       Success: false,
@@ -288,21 +320,21 @@ registerRouter.get('/approve-mechanic/:_id', async (req, res) => {
 
 registerRouter.get('/reject-mechanic/:_id', async (req, res) => {
   try {
-      const id = req.params._id
-      const update = await loginData.updateOne({ _id: id }, { $set: { status: 2 } })
-      if (update.modifiedCount == 1) {
-        return res.status(200).json({
-          Success: true,
-          Error: false,
-          Message: 'Status updated',
-        });
-      } else {
-        return res.status(400).json({
-          Success: false,
-          Error: true,
-          Message: 'Error while updating status',
-        });
-      }
+    const id = req.params._id
+    const update = await loginData.updateOne({ _id: id }, { $set: { status: 2 } })
+    if (update.modifiedCount == 1) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        Message: 'Status updated',
+      });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        Message: 'Error while updating status',
+      });
+    }
   } catch (error) {
     return res.status(400).json({
       Success: false,
@@ -331,13 +363,13 @@ registerRouter.post('/user', async (req, res, next) => {
         Message: 'Mobile number already exist',
       });
     }
-    
+
     const hashedPassword = await bcrypt.hash(req.body.password, 12);
     let log = {
       email: req.body.email,
       password: hashedPassword,
       role: 3,
-      status:0
+      status: 0
     };
     const result = await loginData(log).save();
 
@@ -366,61 +398,61 @@ registerRouter.post('/user', async (req, res, next) => {
     }
   } catch (error) {
     return res.json({
-        Success: false,
-        Error: true,
-        Message: 'Something went wrong',
-      });
+      Success: false,
+      Error: true,
+      Message: 'Something went wrong',
+    });
   }
 });
 
 registerRouter.get('/view-single-user/:id', async (req, res) => {
   try {
-      const user = await userData.findOne({login_id:req.params.id})
-      if (user) {
-          return res.status(200).json({
-              Success: true,
-              Error: false,
-              data: user
-          });
-      }else{
-          return res.status(400).json({
-              Success: false,
-              Error: true,
-              data: 'No data found'
-          });
-      }
-  } catch (error) {
-      return res.status(400).json({
-          Success: false,
-          Error: true,
-          data: 'Something went wrong'
+    const user = await userData.findOne({ login_id: req.params.id })
+    if (user) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        data: user
       });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        data: 'No data found'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      Success: false,
+      Error: true,
+      data: 'Something went wrong'
+    });
   }
 
 })
 
 registerRouter.get('/view-all-users/', async (req, res) => {
   try {
-      const user = await userData()
-      if (user[0]) {
-          return res.status(200).json({
-              Success: true,
-              Error: false,
-              data: user
-          });
-      }else{
-          return res.status(400).json({
-              Success: false,
-              Error: true,
-              data: 'No data found'
-          });
-      }
-  } catch (error) {
-      return res.status(400).json({
-          Success: false,
-          Error: true,
-          data: 'Something went wrong'
+    const user = await userData()
+    if (user[0]) {
+      return res.status(200).json({
+        Success: true,
+        Error: false,
+        data: user
       });
+    } else {
+      return res.status(400).json({
+        Success: false,
+        Error: true,
+        data: 'No data found'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      Success: false,
+      Error: true,
+      data: 'Something went wrong'
+    });
   }
 
 })

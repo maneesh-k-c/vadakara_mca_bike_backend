@@ -160,7 +160,7 @@ mechanicRouter.post('/update-parts/:id', uploadImage.array('image', 1), async (r
     try {
         const id = req.params.id
         const oldData = await partsData.findOne({ _id: id });
-        console.log(oldData.parts_image);
+        console.log(id,oldData.parts_image);
         let parts = {
             part_name: req.body.part_name ? req.body.part_name : oldData.part_name,
             rate: req.body.rate ? req.body.rate : oldData.rate,

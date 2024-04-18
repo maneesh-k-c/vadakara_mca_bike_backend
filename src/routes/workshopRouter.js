@@ -286,7 +286,6 @@ workshopRouter.get('/view-all-bike-booking/:workshopId', async (req, res) => {
 })
 
 
-
 workshopRouter.post('/update-workshop-profile/:id', async (req, res) => {
     try {
         const id = req.params.id
@@ -310,6 +309,60 @@ workshopRouter.post('/update-workshop-profile/:id', async (req, res) => {
                 Success: false,
                 Error: true,
                 Message: 'Error while updating profile',
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong!',
+        });
+    }
+})
+
+workshopRouter.get('/accept-bike-booking/:id', async (req, res) => {
+    try {
+        const id = req.params.id
+      
+        const update = await bikeBookingData.updateOne({ _id: id }, { $set: {status: 'confirmed'} })
+        if (update.modifiedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Booking confirmed',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Error while updating',
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            Message: 'Something went wrong!',
+        });
+    }
+})
+
+workshopRouter.get('/reject-bike-booking/:id', async (req, res) => {
+    try {
+        const id = req.params.id
+      
+        const update = await bikeBookingData.updateOne({ _id: id }, { $set: {status: 'rejected'} })
+        if (update.modifiedCount == 1) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                Message: 'Booking confirmed',
+            });
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                Message: 'Error while updating',
             });
         }
     } catch (error) {

@@ -166,7 +166,7 @@ mechanicRouter.post('/update-parts/:id', uploadImage.array('image', 1), async (r
             rate: req.body.rate ? req.body.rate : oldData.rate,
             quantity: req.body.quantity ? req.body.quantity : oldData.quantity,
             description: req.body.description ? req.body.description : oldData.description,
-            parts_image: req.files ? req.files.map((file) => file.path) : oldData.parts_image.map((file) => file),
+            parts_image: req.files ? req.files.map((file) => file.path) : oldData.parts_image,
 
         };
 

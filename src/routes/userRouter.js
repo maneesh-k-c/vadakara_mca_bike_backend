@@ -591,7 +591,7 @@ userRouter.post('/book-bike/:login_id', async (req, res) => {
                 return res.status(400).json({
                     Success: false,
                     Error: true,
-                    Message: 'Failed to order',
+                    Message: 'Failed to book',
     
                 });
             }

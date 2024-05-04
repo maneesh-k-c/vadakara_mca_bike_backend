@@ -374,7 +374,7 @@ workshopRouter.get('/reject-bike-booking/:id', async (req, res) => {
     }
 })
 
-userRouter.get('/view-orders/:id', async (req, res) => {
+workshopRouter.get('/view-orders/:id', async (req, res) => {
     try {
         const order = await partsOrderData.aggregate([
             {

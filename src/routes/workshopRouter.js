@@ -8,6 +8,7 @@ const reviewData = require('../models/reviewSchema');
 const bikeBookingData = require('../models/bikeBookingSchame');
 const workshopData = require('../models/workshopSchema');
 const { default: mongoose } = require('mongoose');
+const partsOrderData = require('../models/partsOrderSchema');
 require('dotenv').config();
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
@@ -285,7 +286,6 @@ workshopRouter.get('/view-all-bike-booking/:workshopId', async (req, res) => {
 
 })
 
-
 workshopRouter.post('/update-workshop-profile/:id', async (req, res) => {
     try {
         const id = req.params.id
@@ -372,6 +372,82 @@ workshopRouter.get('/reject-bike-booking/:id', async (req, res) => {
             Message: 'Something went wrong!',
         });
     }
+})
+
+userRouter.get('/view-orders/:id', async (req, res) => {
+    try {
+        const order = await partsOrderData.aggregate([
+            {
+                '$lookup': {
+                  'from': 'parts_tbs', 
+                  'localField': 'parts_id', 
+                  'foreignField': '_id', 
+                  'as': 'parts'
+                }
+              }, {
+                '$lookup': {
+                  'from': 'workshop_tbs', 
+                  'localField': 'parts.workshop_id', 
+                  'foreignField': '_id', 
+                  'as': 'workshop'
+                }
+              },
+            {
+                '$unwind': '$parts'
+            },
+            {
+                '$unwind': '$workshop'
+            },
+            {
+                '$match': {
+                    'parts.workshop_id': new mongoose.Types.ObjectId(req.params.id)
+                }
+            },
+            {
+                '$group': {
+                    '_id': '$_id',
+                    'parts_image': {
+                        '$first': {
+                            '$cond': {
+                                if: { '$ne': ['$parts.parts_image', null] },
+                                then: '$parts.parts_image',
+                                else: 'default_image_url',
+                            },
+                        },
+                    },
+                    'part_name': { '$first': '$parts.part_name' },
+                    'workshop_name': { '$first': '$workshop.workshop_name' },
+                    'rate': { '$first': '$parts.rate' },
+                    'description': { '$first': '$parts.description' },
+                    'rate': { '$first': '$parts.rate' },
+                    'quantity': { '$first': '$quantity' },
+                    'subtotal': { '$first': '$subtotal' },
+                    'status': { '$first': '$status' },
+                }
+            }
+        ])
+        if (order[0]) {
+            return res.status(200).json({
+                Success: true,
+                Error: false,
+                data: order
+            });
+
+        } else {
+            return res.status(400).json({
+                Success: false,
+                Error: true,
+                data: 'No data found'
+            });
+        }
+    } catch (error) {
+        return res.status(400).json({
+            Success: false,
+            Error: true,
+            data: 'Something went wrong'
+        });
+    }
+
 })
 
 
